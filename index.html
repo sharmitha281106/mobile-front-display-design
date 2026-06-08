@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Mobile UI Simulation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --neon-green: #0aff0a;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --screen-width: 340px;
+            --screen-height: 680px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- PHONE BODY --- */
+        .phone-frame {
+            width: var(--screen-width);
+            height: var(--screen-height);
+            background: #000;
+            border-radius: 40px;
+            border: 8px solid #333;
+            box-shadow: 0 0 50px rgba(0, 243, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* --- WALLPAPER & ANIMATIONS --- */
+        .wallpaper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* brother &sister animation IMAGE BACKGROUND */
+            background: url('https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?q=80&w=1000&auto=format&fit=crop') no-repeat center center/cover;
+            z-index: 0;
+        }
+
+        /* Dark overlay for readability */
+        .wallpaper::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Flower Flow Animation */
+        .flower {
+            position: absolute;
+            top: -50px;
+            background: pink;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: fall linear infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(800px) rotate(360deg); opacity: 0; }
+        }
+
+        /* --- STATUS BAR --- */
+        .status-bar {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            color: white;
+            font-size: 12px;
+            z-index: 100;
+            background: rgba(0,0,0,0.2);
+            cursor: pointer; /* Indicates swipe down */
+        }
+
+        /* --- NOTIFICATION PANEL --- */
+        .notification-panel {
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 99;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 60px;
+            color: white;
+        }
+
+        .notification-panel.active {
+            top: 0;
+        }
+
+        .toggle-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px;
+            font-size: 20px;
+            color: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        /* --- SCREENS --- */
+        .screen {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            padding-top: 40px;
+        }
+
+        /* --- LOCK SCREEN --- */
+        #lock-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        #lock-screen.hidden {
+            transform: translateY(-100%);
+        }
+
+        .lock-clock {
+            font-size: 60px;
+            font-weight: 200;
+            text-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        .lock-date {
+            font-size: 18px;
+            margin-bottom: 200px;
+        }
+
+        .swipe-hint {
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+
+        /* --- HOME SCREEN UI --- */
+        .google-search {
+            width: 85%;
+            height: 40px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 20px;
+            margin: 10px auto;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            color: #555;
+            font-size: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+
+        .app-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .app-icon:active {
+            transform: scale(0.9);
+        }
+
+        .icon-box {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            box-shadow: 0 0 10px rgba(255,255,255,0.1);
+            border: 1px solid var(--glass-border);
+        }
+
+        .app-name {
+            color: white;
+            font-size: 10px;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        /* Neon Colors for specific apps */
+        .fa-google { color: #DB4437; }
+        .fa-youtube { color: #FF0000; text-shadow: 0 0 10px red; }
+        .fa-whatsapp { color: #25D366; text-shadow: 0 0 10px #25D366; }
+        .fa-facebook { color: #1877F2; }
+        .fa-instagram { color: #C13584; }
+
+        /* --- MUSIC PLAYER WIDGET --- */
+        .music-widget {
+            width: 90%;
+            height: 70px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            margin: 10px auto;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid var(--neon-purple);
+            box-shadow: 0 0 15px var(--neon-purple);
+        }
+
+        .album-art {
+            width: 50px;
+            height: 50px;
+            background: #333;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .track-info {
+            flex: 1;
+            margin-left: 10px;
+            color: white;
+        }
+
+        .track-title { font-size: 12px; font-weight: bold; }
+        .track-artist { font-size: 10px; color: #aaa; }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            color: white;
+            font-size: 18px;
+            margin-right: 10px;
+        }
+
+        /* --- PAGES LOGIC --- */
+        .pages-container {
+            flex: 1;
+            display: flex;
+            overflow-x: hidden; /* Hide scrollbar */
+            scroll-behavior: smooth;
+        }
+
+        .page {
+            min-width: 100%;
+            transition: transform 0.3s ease;
+        }
+
+        /* --- BOTTOM DOCK --- */
+        .dock {
+            height: 70px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            margin: 10px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        /* --- APP OPEN ANIMATION --- */
+        .app-window {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 0; height: 0;
+            background: white;
+            z-index: 300;
+            transform: translate(-50%, -50%);
+            transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            border-radius: 50%;
+            opacity: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .app-window.open {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            opacity: 1;
+        }
+
+        .close-app-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        
+        .page-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+        .dot {
+            width: 6px; 
+            height: 6px; 
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+        }
+        .dot.active { background: white; }
+
+    </style>
+</head>
+<body>
+
+    <div class="phone-frame">
+        <div class="wallpaper"></div>
+        <div id="flower-container"></div>
+
+        <div class="status-bar" onclick="toggleNotification()">
+            <span><i class="fas fa-signal"></i> 5G</span>
+            <span id="status-time">12:30</span>
+            <span><i class="fas fa-battery-three-quarters"></i> 85%</span>
+        </div>
+
+        <div class="notification-panel" id="notification-panel">
+            <h3>Quick Settings</h3>
+            <div style="display: flex; flex-wrap: wrap; justify-content: center;">
+                <div class="toggle-btn"><i class="fas fa-wifi"></i></div>
+                <div class="toggle-btn"><i class="fab fa-bluetooth-b"></i></div>
+                <div class="toggle-btn"><i class="fas fa-plane"></i></div>
+                <div class="toggle-btn"><i class="fas fa-moon"></i></div>
+            </div>
+            <p style="margin-top: 20px;">No new notifications</p>
+            <div onclick="toggleNotification()" style="margin-top: auto; margin-bottom: 20px; cursor: pointer;">
+                <i class="fas fa-chevron-up"></i>
+            </div>
+        </div>
+
+        <div class="app-window" id="app-window">
+            <h1 id="app-title">App Name</h1>
+            <p>Loading...</p>
+            <div class="close-app-btn" onclick="closeApp()">Close App</div>
+        </div>
+
+        <div class="screen" id="lock-screen" onclick="unlockPhone()">
+            <div class="lock-clock" id="lock-clock">12:30</div>
+            <div class="lock-date" id="lock-date">Monday, Jan 1</div>
+            <div class="music-widget" style="width: 80%; background: rgba(255,255,255,0.1);">
+                <div class="album-art"><i class="fas fa-music"></i></div>
+                <div class="track-info">
+                    <div class="track-title">Neon Nights</div>
+                    <div class="track-artist">Cyber Artist</div>
+                </div>
+                <div class="controls">
+                    <i class="fas fa-backward"></i>
+                    <i class="fas fa-play"></i>
+                    <i class="fas fa-forward"></i>
+                </div>
+            </div>
+            <div class="swipe-hint" style="margin-top: 50px;">
+                <i class="fas fa-chevron-up"></i><br>Swipe to Unlock
+            </div>
+            <div style="position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: space-between; padding: 0 30px; font-size: 20px;">
+                <i class="fas fa-phone"></i>
+                <i class="fas fa-camera"></i>
+            </div>
+        </div>
+
+        <div class="screen" id="home-screen">
+            
+            <div class="pages-container" id="pages-container">
+                
+                <div class="page" id="page-1">
+                    <div class="google-search">
+                        <i class="fab fa-google" style="margin-right: 10px;"></i> Search...
+                        <i class="fas fa-microphone" style="margin-left: auto;"></i>
+                    </div>
+
+                    <div class="app-grid">
+                        <div class="app-icon" onclick="openApp('Google')">
+                            <div class="icon-box"><i class="fab fa-google"></i></div>
+                            <span class="app-name">Google</span>
+                        </div>
+                        <div class="app-icon" onclick="openApp('Play Store')">
+                            <div class="icon-box" style="color: #00d2ff;"><i class="fab fa-google-play"></i></div>
+                            <span class="app-name">Play Store</span>
+                        </div>
+                        <div class="app-icon" onclick="openApp('Chrome')">
+                            <div class="icon-box" style="color: yellow;"><i class="fab fa-chrome"></i></div>
+                            <span class="app-name">Chrome</span>
+                        </div>
+                        <div class="app-icon" onclick="openApp('Gmail')">
+                            <div class="icon-box" style="color: #ea4335;"><i class="fas fa-envelope"></i></div>
+                            <span class="app-name">Gmail</span>
+                        </div>
+                        <div class="app-icon" onclick="openApp('Maps')">
+                            <div class="icon-box" style="color: #34a853;"><i class="fas fa-map-marked-alt"></i></div>
+                            <span class="app-name">Maps</span>
+                        </div>
+                        <div class="app-icon" onclick="openApp('YouTube')">
+                            <div class="icon-box"><i class="fab fa-youtube"></i></div>
+                            <span class="app-name">YouTube</span>
+                        </div>
+                        <div class="app-icon" onclick="openApp('Drive')">
+                            <div class="icon-box" style="color: #1a73e8;"><i class="fab fa-google-drive"></i></div>
+                            <span class="app-name">Drive</span>
+                        </div>
+                        <div class="app-icon" onclick="openApp('Gallery')">
+                            <div class="icon-box" style="color: #fbbc05;"><i class="fas fa-images"></i></div>
+                            <span class="app-name">Gallery</span>
+                        </div>
+                    </div>
+
+                    <div class="music-widget">
+                        <div class="album-art"><i class="fas fa-headphones"></i></div>
+                        <div class="track-info">
+                            <div class="track-title">Panda Flow</div>
+                            <div class="track-artist">Lofi Beats</div>
+                        </div>
+                        <div class="controls">
+                            <i class="fas fa-step-backward"></i>
+                            <i class="fas fa-pause" style="color: var(--neon-blue);"></i>
+                            <i class="fas fa-step-forward"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page" id="page-2" style="transform: translateX(100%); position: absolute; top:0;">
+                    <div style="height: 50px;"></div> <div class="app-grid">
+                        <div class="app-icon" onclick="openApp('Settings')">
+                            <div class="icon-box" style="background: #333;"><i class="fas fa-cog"></i></div>
+                            <span class="app-name">Settings</span>
+                        </div>
+                        <div class="app-icon" onclick="openApp('Word')">
+                            <div class="icon-box" style="color: #2b579a;"><i class="fas fa-file-word"></i></div>
+                            <span class="app-name">Word</span>
+                        </div>
+                        <div class="app-icon" onclick="openApp('Calculator')">
+                            <div class="icon-box" style="color: orange;"><i class="fas fa-calculator"></i></div>
+                            <span class="app-name">Calc</span>
+                        </div>
+                        <div class="app-icon" onclick="openApp('LinkedIn')">
+                            <div class="icon-box" style="color: #0077b5;"><i class="fab fa-linkedin"></i></div>
+                            <span class="app-name">LinkedIn</span>
+                        </div>
+                        <div class="app-icon" onclick="openApp('PDF')">
+                            <div class="icon-box" style="color: #ff0000;"><i class="fas fa-file-pdf"></i></div>
+                            <span class="app-name">PDF</span>
+                        </div>
+                        <div class="app-icon" onclick="openApp('Calendar')">
+                            <div class="icon-box"><i class="fas fa-calendar-alt"></i></div>
+                            <span class="app-name">Calendar</span>
+                        </div>
+                        <div class="app-icon" onclick="openApp('CapCut')">
+                            <div class="icon-box"><i class="fas fa-cut"></i></div>
+                            <span class="app-name">CapCut</span>
+                        </div>
+                        <div class="app-icon" onclick="openApp('ShareChat')">
+                            <div class="icon-box"><i class="fas fa-share-alt"></i></div>
+                            <span class="app-name">ShareChat</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="page-indicator">
+                <div class="dot active" id="dot1" onclick="goToPage(1)"></div>
+                <div class="dot" id="dot2" onclick="goToPage(2)"></div>
+            </div>
+
+            <div class="dock">
+                <div class="app-icon" onclick="openApp('Phone')">
+                    <div class="icon-box" style="background: transparent; box-shadow: none; border: none; color: #0aff0a; font-size: 28px;">
+                        <i class="fas fa-phone-square-alt"></i>
+                    </div>
+                </div>
+                <div class="app-icon" onclick="openApp('Message')">
+                    <div class="icon-box" style="background: transparent; box-shadow: none; border: none; color: white; font-size: 28px;">
+                        <i class="fas fa-comment-dots"></i>
+                    </div>
+                </div>
+                <div class="app-icon" onclick="goToPage(1)">
+                    <div class="icon-box" style="background: transparent; box-shadow: none; border: none; color: white; font-size: 28px;">
+                        <i class="fas fa-th"></i>
+                    </div>
+                </div>
+                <div class="app-icon" onclick="goToPage(2)">
+                    <div class="icon-box" style="background: transparent; box-shadow: none; border: none; color: white; font-size: 28px;">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- CLOCK FUNCTIONALITY ---
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const timeString = `${hours}:${minutes}`;
+            
+            document.getElementById('status-time').textContent = timeString;
+            document.getElementById('lock-clock').textContent = timeString;
+
+            const options = { weekday: 'long', month: 'short', day: 'numeric' };
+            document.getElementById('lock-date').textContent = now.toLocaleDateString('en-US', options);
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // --- FLOWER GENERATOR ---
+        const flowerContainer = document.getElementById('flower-container');
+        function createFlower() {
+            const flower = document.createElement('div');
+            flower.classList.add('flower');
+            flower.style.left = Math.random() * 100 + '%';
+            flower.style.animationDuration = Math.random() * 3 + 2 + 's';
+            flowerContainer.appendChild(flower);
+
+            setTimeout(() => {
+                flower.remove();
+            }, 5000);
+        }
+        setInterval(createFlower, 300);
+
+        // --- UNLOCK PHONE ---
+        function unlockPhone() {
+            document.getElementById('lock-screen').classList.add('hidden');
+        }
+
+        // --- NOTIFICATION PANEL ---
+        function toggleNotification() {
+            document.getElementById('notification-panel').classList.toggle('active');
+        }
+
+        // --- PAGE SWITCHING ---
+        function goToPage(pageNum) {
+            const page1 = document.getElementById('page-1');
+            const page2 = document.getElementById('page-2');
+            const dot1 = document.getElementById('dot1');
+            const dot2 = document.getElementById('dot2');
+
+            if (pageNum === 1) {
+                page1.style.transform = "translateX(0)";
+                page2.style.transform = "translateX(100%)";
+                dot1.classList.add('active');
+                dot2.classList.remove('active');
+            } else {
+                page1.style.transform = "translateX(-100%)";
+                page2.style.transform = "translateX(0)";
+                dot1.classList.remove('active');
+                dot2.classList.add('active');
+            }
+        }
+
+        // --- APP OPEN ANIMATION ---
+        function openApp(appName) {
+            const appWindow = document.getElementById('app-window');
+            const appTitle = document.getElementById('app-title');
+            
+            appTitle.textContent = appName;
+            appWindow.classList.add('open');
+        }
+
+        function closeApp() {
+            document.getElementById('app-window').classList.remove('open');
+        }
+
+    </script>
+</body>
+</html>
